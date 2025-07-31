@@ -28,6 +28,7 @@ import {
   ShowChart
 } from '@mui/icons-material';
 import StockService from '../services/stockService';
+import toast from 'react-hot-toast';
 
 const StockDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -99,6 +100,9 @@ const StockDashboard = () => {
     const newWatchlist = StockService.getWatchlist();
     setWatchlist(newWatchlist);
     loadWatchlistData(newWatchlist);
+    
+    // Show success message
+    toast.success(`${symbol} added to watchlist!`);
   };
 
   // Remove from watchlist
@@ -107,6 +111,9 @@ const StockDashboard = () => {
     const newWatchlist = StockService.getWatchlist();
     setWatchlist(newWatchlist);
     setWatchlistData(prev => prev.filter(item => item.symbol !== symbol));
+    
+    // Show success message
+    toast.success(`${symbol} removed from watchlist!`);
   };
 
   // Load stock details
@@ -226,7 +233,7 @@ const StockDashboard = () => {
                         <IconButton 
                           edge="end" 
                           onClick={() => addToWatchlist(stock.symbol)}
-                          disabled={watchlist.includes(stock.symbol)}
+                          disabled={watchlist.includes(stock.symbol.toUpperCase())}
                           size="small"
                         >
                           <Add />

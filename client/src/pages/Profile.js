@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Container,
   Typography,
@@ -49,7 +49,7 @@ const Profile = () => {
     lastName: user?.lastName || '',
     email: user?.email || '',
     preferences: {
-      emailNotifications: user?.preferences?.emailNotifications || true,
+      emailNotifications: user?.preferences?.emailNotifications ?? true,
       alertFrequency: user?.preferences?.alertFrequency || 'immediate',
       timezone: user?.preferences?.timezone || 'UTC'
     }
@@ -63,6 +63,22 @@ const Profile = () => {
 
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+
+  // Update profile data when user changes
+  useEffect(() => {
+    if (user) {
+      setProfileData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        preferences: {
+          emailNotifications: user.preferences?.emailNotifications ?? true,
+          alertFrequency: user.preferences?.alertFrequency || 'immediate',
+          timezone: user.preferences?.timezone || 'UTC'
+        }
+      });
+    }
+  }, [user]);
 
   const handleProfileChange = (field, value) => {
     if (field.includes('.')) {
