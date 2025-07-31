@@ -14,8 +14,8 @@ const {
 
 // @route   GET /api/stocks/quote/:symbol
 // @desc    Get real-time stock quote
-// @access  Private
-router.get('/quote/:symbol', authenticateToken, getStockQuote);
+// @access  Public
+router.get('/quote/:symbol', getStockQuote);
 
 // @route   GET /api/stocks/history/:symbol
 // @desc    Get historical stock data with technical indicators
@@ -24,13 +24,13 @@ router.get('/history/:symbol', authenticateToken, getStockHistory);
 
 // @route   GET /api/stocks/search
 // @desc    Search for stock symbols
-// @access  Private
-router.get('/search', authenticateToken, searchStocks);
+// @access  Public
+router.get('/search', searchStocks);
 
 // @route   GET /api/stocks/market-overview
 // @desc    Get market overview (major indices)
-// @access  Private
-router.get('/market-overview', authenticateToken, getMarketOverview);
+// @access  Public
+router.get('/market-overview', getMarketOverview);
 
 // @route   POST /api/stocks/refresh/:symbol
 // @desc    Force refresh stock data
