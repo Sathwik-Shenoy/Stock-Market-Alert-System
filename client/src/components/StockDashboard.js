@@ -16,9 +16,6 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-  Divider,
-  Tab,
-  Tabs,
   Paper
 } from '@mui/material';
 import {
@@ -28,7 +25,6 @@ import {
   Add,
   Remove,
   Refresh,
-  Timeline,
   ShowChart
 } from '@mui/icons-material';
 import StockService from '../services/stockService';
@@ -44,7 +40,6 @@ const StockDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [error, setError] = useState('');
-  const [tabValue, setTabValue] = useState(0);
 
   // Load watchlist on component mount
   useEffect(() => {
