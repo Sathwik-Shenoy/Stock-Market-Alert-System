@@ -112,10 +112,10 @@ const getStockQuote = async (req, res) => {
     if (cachedData) {
       return res.json({
         symbol: cachedData.symbol,
-        price: cachedData.price,
-        change: cachedData.change,
-        changePercent: cachedData.changePercent,
-        volume: cachedData.volume,
+        price: cachedData.price.current,
+        change: cachedData.price.change,
+        changePercent: cachedData.price.changePercent,
+        volume: cachedData.volume.current,
         timestamp: cachedData.timestamp,
         source: 'cache'
       });
@@ -139,18 +139,34 @@ const getStockQuote = async (req, res) => {
 
     const stockData = {
       symbol: quote['01. symbol'],
-      price: parseFloat(quote['05. price']),
-      change: parseFloat(quote['09. change']),
-      changePercent: parseFloat(quote['10. change percent'].replace('%', '')),
-      volume: parseInt(quote['06. volume']),
+      companyName: quote['01. symbol'], // Using symbol as company name for now
+      price: {
+        current: parseFloat(quote['05. price']),
+        open: parseFloat(quote['02. open']),
+        high: parseFloat(quote['03. high']),
+        low: parseFloat(quote['04. low']),
+        previousClose: parseFloat(quote['08. previous close']),
+        change: parseFloat(quote['09. change']),
+        changePercent: parseFloat(quote['10. change percent'].replace('%', ''))
+      },
+      volume: {
+        current: parseInt(quote['06. volume'])
+      },
+      source: 'alpha_vantage',
       timestamp: new Date()
     };
 
     // Save to database
     await StockData.create(stockData);
 
+    // Return data in the format expected by the frontend
     res.json({
-      ...stockData,
+      symbol: stockData.symbol,
+      price: stockData.price.current,
+      change: stockData.price.change,
+      changePercent: stockData.price.changePercent,
+      volume: stockData.volume.current,
+      timestamp: stockData.timestamp,
       source: 'api'
     });
 
