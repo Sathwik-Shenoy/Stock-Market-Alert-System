@@ -39,7 +39,6 @@ import {
 } from '@mui/icons-material';
 import toast from 'react-hot-toast';
 import AlertService from '../services/alertService';
-import AdminService from '../services/adminService';
 
 const Alerts = () => {
   const [alerts, setAlerts] = useState([]);
@@ -127,7 +126,7 @@ const Alerts = () => {
         toast.success('Alert created successfully');
       }
 
-      setOpenDialog(false);
+      handleCloseDialog();
       loadAlerts(); // Reload alerts list
     } catch (err) {
       toast.error(`Failed to save alert: ${err.message}`);
@@ -168,6 +167,21 @@ const Alerts = () => {
     } catch (err) {
       toast.error(`Failed to test alert: ${err.message}`);
     }
+  };
+
+  // Close dialog and reset form
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setEditingAlert(null);
+    setNewAlert({
+      symbol: '',
+      alertType: 'price',
+      condition: 'above',
+      targetValue: '',
+      description: '',
+      emailNotification: true,
+      expiresAt: ''
+    });
   };
 
   // Open create dialog
@@ -421,11 +435,23 @@ const Alerts = () => {
         </Fab>
 
         {/* Create/Edit Alert Dialog */}
-        <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="md" fullWidth>
-          <DialogTitle>
+        <Dialog 
+          open={openDialog} 
+          onClose={handleCloseDialog} 
+          maxWidth="md" 
+          fullWidth
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+          disablePortal={false}
+          keepMounted={false}
+          disableEnforceFocus={false}
+          disableAutoFocus={false}
+          disableRestoreFocus={false}
+        >
+          <DialogTitle id="alert-dialog-title">
             {editingAlert ? 'Edit Alert' : 'Create New Alert'}
           </DialogTitle>
-          <DialogContent>
+          <DialogContent id="alert-dialog-description">
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -514,11 +540,17 @@ const Alerts = () => {
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+            <Button 
+              onClick={handleCloseDialog}
+              color="inherit"
+            >
+              Cancel
+            </Button>
             <Button 
               onClick={handleSaveAlert} 
               variant="contained"
               disabled={submitting}
+              autoFocus
             >
               {submitting ? 'Saving...' : (editingAlert ? 'Update Alert' : 'Create Alert')}
             </Button>
