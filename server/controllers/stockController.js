@@ -1,7 +1,9 @@
 const axios = require('axios');
 const StockData = require('../models/StockData');
 
+const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
 const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
+const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
 const ALPHA_VANTAGE_BASE_URL = 'https://www.alphavantage.co/query';
 
 /**
@@ -121,54 +123,109 @@ const getStockQuote = async (req, res) => {
       });
     }
 
-    // Fetch from Alpha Vantage API
-    const response = await axios.get(ALPHA_VANTAGE_BASE_URL, {
-      params: {
-        function: 'GLOBAL_QUOTE',
+    // Fetch from Finnhub API (Primary)
+    try {
+      const response = await axios.get(`${FINNHUB_BASE_URL}/quote`, {
+        params: {
+          symbol: symbol.toUpperCase(),
+          token: FINNHUB_API_KEY
+        },
+        timeout: 10000
+      });
+
+      const quote = response.data;
+      
+      if (!quote.c || quote.c === 0) {
+        throw new Error('No data from Finnhub');
+      }
+
+      const stockData = {
         symbol: symbol.toUpperCase(),
-        apikey: ALPHA_VANTAGE_API_KEY
-      },
-      timeout: 10000
-    });
+        companyName: symbol.toUpperCase(), // Using symbol as company name
+        price: {
+          current: parseFloat(quote.c), // current price
+          open: parseFloat(quote.o), // open price
+          high: parseFloat(quote.h), // high price
+          low: parseFloat(quote.l), // low price
+          previousClose: parseFloat(quote.pc), // previous close
+          change: parseFloat(quote.d), // change
+          changePercent: parseFloat(quote.dp) // change percent
+        },
+        volume: {
+          current: 0, // Finnhub quote doesn't include volume
+          average: 0
+        },
+        timestamp: new Date(quote.t * 1000), // convert unix timestamp
+        source: 'finnhub'
+      };
 
-    const quote = response.data['Global Quote'];
-    
-    if (!quote || !quote['05. price']) {
-      return res.status(404).json({ error: 'Stock symbol not found' });
+      // Save to database
+      await StockData.create(stockData);
+
+      // Return data in the format expected by the frontend
+      return res.json({
+        symbol: stockData.symbol,
+        price: stockData.price.current,
+        change: stockData.price.change,
+        changePercent: stockData.price.changePercent,
+        volume: stockData.volume.current,
+        timestamp: stockData.timestamp,
+        source: 'finnhub'
+      });
+
+    } catch (finnhubError) {
+      console.log(`Finnhub API failed for ${symbol}, trying Alpha Vantage fallback:`, finnhubError.message);
+      
+      // Fallback to Alpha Vantage
+      const response = await axios.get(ALPHA_VANTAGE_BASE_URL, {
+        params: {
+          function: 'GLOBAL_QUOTE',
+          symbol: symbol.toUpperCase(),
+          apikey: ALPHA_VANTAGE_API_KEY
+        },
+        timeout: 10000
+      });
+
+      const quote = response.data['Global Quote'];
+      
+      if (!quote || !quote['05. price']) {
+        return res.status(404).json({ error: 'Stock symbol not found in both APIs' });
+      }
+
+      const stockData = {
+        symbol: quote['01. symbol'],
+        companyName: quote['01. symbol'],
+        price: {
+          current: parseFloat(quote['05. price']),
+          open: parseFloat(quote['02. open']),
+          high: parseFloat(quote['03. high']),
+          low: parseFloat(quote['04. low']),
+          previousClose: parseFloat(quote['08. previous close']),
+          change: parseFloat(quote['09. change']),
+          changePercent: parseFloat(quote['10. change percent'].replace('%', ''))
+        },
+        volume: {
+          current: parseInt(quote['06. volume']),
+          average: 0
+        },
+        source: 'alpha_vantage',
+        timestamp: new Date()
+      };
+
+      // Save to database
+      await StockData.create(stockData);
+
+      // Return data in the format expected by the frontend
+      return res.json({
+        symbol: stockData.symbol,
+        price: stockData.price.current,
+        change: stockData.price.change,
+        changePercent: stockData.price.changePercent,
+        volume: stockData.volume.current,
+        timestamp: stockData.timestamp,
+        source: 'alpha_vantage_fallback'
+      });
     }
-
-    const stockData = {
-      symbol: quote['01. symbol'],
-      companyName: quote['01. symbol'], // Using symbol as company name for now
-      price: {
-        current: parseFloat(quote['05. price']),
-        open: parseFloat(quote['02. open']),
-        high: parseFloat(quote['03. high']),
-        low: parseFloat(quote['04. low']),
-        previousClose: parseFloat(quote['08. previous close']),
-        change: parseFloat(quote['09. change']),
-        changePercent: parseFloat(quote['10. change percent'].replace('%', ''))
-      },
-      volume: {
-        current: parseInt(quote['06. volume'])
-      },
-      source: 'alpha_vantage',
-      timestamp: new Date()
-    };
-
-    // Save to database
-    await StockData.create(stockData);
-
-    // Return data in the format expected by the frontend
-    res.json({
-      symbol: stockData.symbol,
-      price: stockData.price.current,
-      change: stockData.price.change,
-      changePercent: stockData.price.changePercent,
-      volume: stockData.volume.current,
-      timestamp: stockData.timestamp,
-      source: 'api'
-    });
 
   } catch (error) {
     console.error('Error fetching stock quote:', error.message);
@@ -298,33 +355,69 @@ const searchStocks = async (req, res) => {
       return res.status(400).json({ error: 'Search query is required' });
     }
 
-    const response = await axios.get(ALPHA_VANTAGE_BASE_URL, {
-      params: {
-        function: 'SYMBOL_SEARCH',
-        keywords: query,
-        apikey: ALPHA_VANTAGE_API_KEY
-      },
-      timeout: 10000
-    });
+    // Try Finnhub first
+    try {
+      const response = await axios.get(`${FINNHUB_BASE_URL}/search`, {
+        params: {
+          q: query,
+          token: FINNHUB_API_KEY
+        },
+        timeout: 10000
+      });
 
-    const matches = response.data.bestMatches || [];
-    
-    const results = matches.slice(0, 10).map(match => ({
-      symbol: match['1. symbol'],
-      name: match['2. name'],
-      type: match['3. type'],
-      region: match['4. region'],
-      marketOpen: match['5. marketOpen'],
-      marketClose: match['6. marketClose'],
-      timezone: match['7. timezone'],
-      currency: match['8. currency']
-    }));
+      const matches = response.data.result || [];
+      
+      const results = matches.slice(0, 10).map(match => ({
+        symbol: match.symbol,
+        name: match.description,
+        type: match.type,
+        region: 'US', // Finnhub doesn't provide region info in search
+        marketOpen: '09:30',
+        marketClose: '16:00',
+        timezone: 'US/Eastern',
+        currency: 'USD'
+      }));
 
-    res.json({
-      query,
-      results,
-      count: results.length
-    });
+      return res.json({
+        query,
+        results,
+        count: results.length,
+        source: 'finnhub'
+      });
+
+    } catch (finnhubError) {
+      console.log(`Finnhub search failed, trying Alpha Vantage fallback:`, finnhubError.message);
+      
+      // Fallback to Alpha Vantage
+      const response = await axios.get(ALPHA_VANTAGE_BASE_URL, {
+        params: {
+          function: 'SYMBOL_SEARCH',
+          keywords: query,
+          apikey: ALPHA_VANTAGE_API_KEY
+        },
+        timeout: 10000
+      });
+
+      const matches = response.data.bestMatches || [];
+      
+      const results = matches.slice(0, 10).map(match => ({
+        symbol: match['1. symbol'],
+        name: match['2. name'],
+        type: match['3. type'],
+        region: match['4. region'],
+        marketOpen: match['5. marketOpen'],
+        marketClose: match['6. marketClose'],
+        timezone: match['7. timezone'],
+        currency: match['8. currency']
+      }));
+
+      return res.json({
+        query,
+        results,
+        count: results.length,
+        source: 'alpha_vantage_fallback'
+      });
+    }
 
   } catch (error) {
     console.error('Error searching stocks:', error.message);
@@ -343,26 +436,50 @@ const getMarketOverview = async (req, res) => {
 
     for (const symbol of indices) {
       try {
-        const response = await axios.get(ALPHA_VANTAGE_BASE_URL, {
+        // Try Finnhub first
+        const response = await axios.get(`${FINNHUB_BASE_URL}/quote`, {
           params: {
-            function: 'GLOBAL_QUOTE',
-            symbol,
-            apikey: ALPHA_VANTAGE_API_KEY
+            symbol: symbol,
+            token: FINNHUB_API_KEY
           },
           timeout: 5000
         });
 
-        const quote = response.data['Global Quote'];
-        if (quote && quote['05. price']) {
+        const quote = response.data;
+        if (quote && quote.c && quote.c !== 0) {
           marketData.push({
-            symbol: quote['01. symbol'],
-            price: parseFloat(quote['05. price']),
-            change: parseFloat(quote['09. change']),
-            changePercent: parseFloat(quote['10. change percent'].replace('%', ''))
+            symbol: symbol,
+            price: parseFloat(quote.c),
+            change: parseFloat(quote.d),
+            changePercent: parseFloat(quote.dp)
           });
         }
-      } catch (error) {
-        console.error(`Error fetching ${symbol}:`, error.message);
+      } catch (finnhubError) {
+        console.log(`Finnhub failed for ${symbol}, trying Alpha Vantage:`, finnhubError.message);
+        
+        // Fallback to Alpha Vantage
+        try {
+          const response = await axios.get(ALPHA_VANTAGE_BASE_URL, {
+            params: {
+              function: 'GLOBAL_QUOTE',
+              symbol,
+              apikey: ALPHA_VANTAGE_API_KEY
+            },
+            timeout: 5000
+          });
+
+          const quote = response.data['Global Quote'];
+          if (quote && quote['05. price']) {
+            marketData.push({
+              symbol: quote['01. symbol'],
+              price: parseFloat(quote['05. price']),
+              change: parseFloat(quote['09. change']),
+              changePercent: parseFloat(quote['10. change percent'].replace('%', ''))
+            });
+          }
+        } catch (alphaError) {
+          console.error(`Both APIs failed for ${symbol}:`, alphaError.message);
+        }
       }
     }
 

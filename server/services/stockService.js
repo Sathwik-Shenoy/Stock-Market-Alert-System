@@ -1,7 +1,9 @@
 const axios = require('axios');
 const StockData = require('../models/StockData');
 
+const FINNHUB_API_KEY = process.env.FINNHUB_API_KEY;
 const ALPHA_VANTAGE_API_KEY = process.env.ALPHA_VANTAGE_API_KEY;
+const FINNHUB_BASE_URL = 'https://finnhub.io/api/v1';
 const ALPHA_VANTAGE_BASE_URL = 'https://www.alphavantage.co/query';
 
 /**
@@ -33,38 +35,77 @@ class StockService {
         };
       }
 
-      // Fetch from API
-      const response = await axios.get(ALPHA_VANTAGE_BASE_URL, {
-        params: {
-          function: 'GLOBAL_QUOTE',
+      // Fetch from Finnhub API (Primary)
+      try {
+        const response = await axios.get(`${FINNHUB_BASE_URL}/quote`, {
+          params: {
+            symbol: symbol.toUpperCase(),
+            token: FINNHUB_API_KEY
+          },
+          timeout: 10000
+        });
+
+        const quote = response.data;
+        
+        if (!quote.c || quote.c === 0) {
+          throw new Error(`No data found for symbol ${symbol} from Finnhub`);
+        }
+
+        const stockData = {
           symbol: symbol.toUpperCase(),
-          apikey: ALPHA_VANTAGE_API_KEY
-        },
-        timeout: 10000
-      });
+          price: parseFloat(quote.c), // current price
+          change: parseFloat(quote.d), // change
+          changePercent: parseFloat(quote.dp), // change percent
+          volume: 0, // Finnhub doesn't provide volume in quote endpoint
+          timestamp: new Date(quote.t * 1000), // convert unix timestamp
+          source: 'finnhub'
+        };
 
-      const quote = response.data['Global Quote'];
-      
-      if (!quote || !quote['05. price']) {
-        throw new Error(`No data found for symbol ${symbol}`);
+        // Save to cache
+        await StockData.create(stockData);
+
+        return {
+          ...stockData,
+          source: 'finnhub'
+        };
+
+      } catch (finnhubError) {
+        console.log(`Finnhub API failed for ${symbol}, trying Alpha Vantage fallback:`, finnhubError.message);
+        
+        // Fallback to Alpha Vantage
+        const response = await axios.get(ALPHA_VANTAGE_BASE_URL, {
+          params: {
+            function: 'GLOBAL_QUOTE',
+            symbol: symbol.toUpperCase(),
+            apikey: ALPHA_VANTAGE_API_KEY
+          },
+          timeout: 10000
+        });
+
+        const quote = response.data['Global Quote'];
+        
+        if (!quote || !quote['05. price']) {
+          throw new Error(`No data found for symbol ${symbol} from both APIs`);
+        }
+
+        const stockData = {
+          symbol: quote['01. symbol'],
+          price: parseFloat(quote['05. price']),
+          change: parseFloat(quote['09. change']),
+          changePercent: parseFloat(quote['10. change percent'].replace('%', '')),
+          volume: parseInt(quote['06. volume']),
+          timestamp: new Date(),
+          source: 'alpha_vantage'
+        };
+
+        // Save to cache
+        await StockData.create(stockData);
+
+        return {
+          ...stockData,
+          source: 'alpha_vantage_fallback'
+        };
       }
-
-      const stockData = {
-        symbol: quote['01. symbol'],
-        price: parseFloat(quote['05. price']),
-        change: parseFloat(quote['09. change']),
-        changePercent: parseFloat(quote['10. change percent'].replace('%', '')),
-        volume: parseInt(quote['06. volume']),
-        timestamp: new Date()
-      };
-
-      // Save to cache
-      await StockData.create(stockData);
-
-      return {
-        ...stockData,
-        source: 'api'
-      };
 
     } catch (error) {
       console.error(`Error fetching quote for ${symbol}:`, error.message);
