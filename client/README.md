@@ -1,70 +1,52 @@
-# Getting Started with Create React App
+# Stock Market Dashboard Frontend
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This React client is part of the Stock Market Alert System and has been enhanced to better match a frontend dashboard assignment evaluation.
 
-## Available Scripts
+## Assignment-Focused Enhancements
 
-In the project directory, you can run:
+The dashboard (`/dashboard`) now includes:
 
-### `npm start`
+- Role-based UI simulation
+	- Viewer (read-only)
+	- Admin (can add/remove watchlist symbols and create alerts)
+- Improved filtering
+	- Watchlist symbol search
+	- Indicator filter: RSI, MACD crossovers, SMA signals
+- Insights section
+	- Most viewed stocks
+	- Highest RSI alert stocks
+	- MACD crossovers detected
+- Persisted frontend state
+	- Role preference
+	- Viewed stock counters
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Existing Features Retained
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+- Market overview cards
+- Stock search and watchlist tracking
+- Detailed stock view with technical indicators
+- Responsive layout and interactive UI
 
-### `npm test`
+## Run the Client
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+From the `client/` directory:
 
-### `npm run build`
+```bash
+cp .env.example .env
+npm install
+npm start
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Open [http://localhost:3000](http://localhost:3000), login, and open `/dashboard`.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+If your backend runs on a different host, set:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+REACT_APP_API_URL=https://your-api-domain/api
+```
 
-### `npm run eject`
+## Build
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+```bash
+npm run build
+```

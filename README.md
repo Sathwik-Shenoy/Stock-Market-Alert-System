@@ -56,14 +56,8 @@ stock-market-alert-system/
    ```
 
 2. **Setup Environment Variables**
-   ```bash
-   # Create .env file in server/ directory
-   MONGODB_URI=your_mongodb_connection_string
-   JWT_SECRET=your_jwt_secret_key
-   ALPHA_VANTAGE_API_KEY=your_alpha_vantage_key
-   EMAIL_USER=your_email@gmail.com
-   EMAIL_PASS=your_app_password
-   ```
+   - Copy `server/.env.example` to `server/.env` and fill values.
+   - Copy `client/.env.example` to `client/.env` and update API URL if needed.
 
 3. **Run Development Server**
    ```bash
@@ -78,14 +72,39 @@ stock-market-alert-system/
 - `GET /api/auth/me` - Get current user
 
 ### Stock Data
-- `GET /api/stocks/:symbol` - Get stock data with indicators
-- `GET /api/stocks/:symbol/history` - Get historical data
+- `GET /api/stocks/quote/:symbol` - Get real-time stock quote
+- `GET /api/stocks/history/:symbol` - Get historical data with indicators (auth)
+- `GET /api/stocks/search?query=...` - Search symbols
+- `GET /api/stocks/market-overview` - Market overview indices
+- `POST /api/stocks/refresh/:symbol` - Force refresh (premium only)
 
 ### Alerts
 - `GET /api/alerts` - Get user alerts
+- `GET /api/alerts/stats` - Get alert stats
 - `POST /api/alerts` - Create new alert
 - `PUT /api/alerts/:id` - Update alert
+- `PATCH /api/alerts/:id/toggle` - Toggle active/inactive
+- `POST /api/alerts/:id/test` - Test alert condition
 - `DELETE /api/alerts/:id` - Delete alert
+
+## ✅ Production Readiness Notes
+
+- Grid v2 migration warnings addressed.
+- Alert create/test flows are API-contract aligned.
+- Invalid alert IDs now return `400` instead of `500`.
+- Client build compiles successfully.
+
+## 🌐 Deployment Guide (Vercel + Render + MongoDB Atlas)
+
+For complete step-by-step production deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
+
+**Quick Summary:**
+- **Frontend**: Deploy `client/` to Vercel (https://stock.vercel.app)
+- **Backend**: Deploy `server/` to Render (https://api.stock.com)
+- **Database**: MongoDB Atlas (production URI configured)
+- **Environment**: All production variables configured and secured
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed setup with custom domains, environment variables, and post-deployment verification.
 
 ## 📊 Technical Indicators
 
