@@ -34,10 +34,30 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // CORS configuration
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'https://stock-market-silk-beta.vercel.app',
+  'https://stock.vercel.app',
+  'http://localhost:3000'
+].filter(Boolean);
+
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://stock.vercel.app'] 
-    : ['http://localhost:3000'],
+  origin: (origin, callback) => {
+    // Allow non-browser requests (curl, health checks)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    const isAllowedOrigin =
+      allowedOrigins.includes(origin) ||
+      (/^https:\/\/[a-z0-9-]+\.vercel\.app$/i).test(origin);
+
+    if (isAllowedOrigin) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   optionsSuccessStatus: 200
 };
