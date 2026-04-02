@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { getApiBaseUrl } from './apiBaseUrl';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = getApiBaseUrl();
 
 // Create axios instance for admin operations
 const adminAPI = axios.create({

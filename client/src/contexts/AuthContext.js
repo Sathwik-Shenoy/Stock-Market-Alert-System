@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { getApiBaseUrl } from '../services/apiBaseUrl';
 
 // Initial state
 const initialState = {
@@ -54,7 +55,7 @@ const authReducer = (state, action) => {
 const AuthContext = createContext();
 
 // API base URL
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = getApiBaseUrl();
 
 // Axios instance
 const api = axios.create({
