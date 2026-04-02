@@ -15,7 +15,7 @@ const Footer = () => {
     >
       <Container maxWidth="lg">
         <Grid container spacing={4} alignItems="center">
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Typography variant="h6" gutterBottom>
               Stock Alert System
             </Typography>
@@ -24,7 +24,7 @@ const Footer = () => {
             </Typography>
           </Grid>
           
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box sx={{ display: 'flex', justifyContent: { xs: 'center', md: 'flex-end' }, gap: 1 }}>
               <IconButton
                 color="inherit"

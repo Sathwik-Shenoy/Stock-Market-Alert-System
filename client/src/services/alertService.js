@@ -123,11 +123,12 @@ class AlertService {
   /**
    * Test an alert manually
    * @param {string} alertId - Alert ID
+   * @param {Object} payload - Optional alert configuration payload
    * @returns {Promise} Test result
    */
-  static async testAlert(alertId) {
+  static async testAlert(alertId, payload = {}) {
     try {
-      const response = await alertAPI.post(`/${alertId}/test`);
+      const response = await alertAPI.post(`/${alertId}/test`, payload);
       return response.data;
     } catch (error) {
       throw this.handleError(error);

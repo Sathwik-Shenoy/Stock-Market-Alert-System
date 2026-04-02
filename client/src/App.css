@@ -123,13 +123,20 @@
 }
 
 /* Responsive design */
+@media (max-width: 1200px) {
+  .dashboard-container {
+    padding: 1.5rem;
+  }
+}
+
 @media (max-width: 768px) {
   .main-content {
     padding-top: 56px; /* Smaller navbar on mobile */
   }
   
   .dashboard-container {
-    padding: 1rem;
+    padding: 1rem 0.75rem;
+    min-height: calc(100vh - 110px);
   }
   
   .dashboard-grid {
@@ -139,6 +146,51 @@
   
   .auth-container {
     padding: 1rem;
+  }
+
+  .auth-form {
+    max-width: 100%;
+  }
+
+  .stock-card {
+    border-radius: 12px !important;
+  }
+
+  .alert-item {
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .main-content {
+    padding-top: 56px;
+  }
+
+  .dashboard-container {
+    padding: 0.75rem 0.5rem;
+    border-radius: 8px 8px 0 0;
+  }
+
+  .dashboard-grid {
+    gap: 0.75rem;
+  }
+
+  .chart-container {
+    height: 300px;
+  }
+
+  /* Ensure buttons are touch-friendly (min 44px height) */
+  button {
+    min-height: 44px;
+  }
+
+  .stock-card,
+  .alert-item {
+    border-radius: 10px !important;
+  }
+
+  .alert-item {
+    border-left-width: 3px;
   }
 }
 

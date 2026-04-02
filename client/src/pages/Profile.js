@@ -193,7 +193,7 @@ const Profile = () => {
 
         <Grid container spacing={3}>
           {/* Profile Information */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Card>
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
@@ -251,7 +251,7 @@ const Profile = () => {
                 </Box>
 
                 <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
                       fullWidth
                       label="First Name"
@@ -260,7 +260,7 @@ const Profile = () => {
                       disabled={!editing}
                     />
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
                       fullWidth
                       label="Last Name"
@@ -269,7 +269,7 @@ const Profile = () => {
                       disabled={!editing}
                     />
                   </Grid>
-                  <Grid item xs={12}>
+                  <Grid size={12}>
                     <TextField
                       fullWidth
                       label="Email Address"
@@ -285,7 +285,7 @@ const Profile = () => {
           </Grid>
 
           {/* Security */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
@@ -310,7 +310,7 @@ const Profile = () => {
           </Grid>
 
           {/* Preferences */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
@@ -334,7 +334,7 @@ const Profile = () => {
                 </Box>
 
                 <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <FormControl fullWidth disabled={!editing}>
                       <InputLabel>Alert Frequency</InputLabel>
                       <Select
@@ -347,7 +347,7 @@ const Profile = () => {
                       </Select>
                     </FormControl>
                   </Grid>
-                  <Grid item xs={12} sm={6}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <FormControl fullWidth disabled={!editing}>
                       <InputLabel>Timezone</InputLabel>
                       <Select
@@ -368,7 +368,7 @@ const Profile = () => {
           </Grid>
 
           {/* Subscription */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>

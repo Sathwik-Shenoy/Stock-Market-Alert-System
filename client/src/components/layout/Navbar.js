@@ -60,7 +60,7 @@ const Navbar = () => {
   return (
     <HideOnScroll>
       <AppBar position="fixed" sx={{ zIndex: 1300 }}>
-        <Toolbar>
+        <Toolbar sx={{ gap: { xs: 0.5, sm: 1 } }}>
           {/* Logo */}
           <Box
             component={Link}
@@ -70,16 +70,17 @@ const Navbar = () => {
               alignItems: 'center',
               textDecoration: 'none',
               color: 'inherit',
-              mr: 3
+              mr: { xs: 1, sm: 3 }
             }}
           >
-            <TrendingUpIcon sx={{ mr: 1, fontSize: 28 }} />
+            <TrendingUpIcon sx={{ mr: { xs: 0.5, sm: 1 }, fontSize: { xs: 24, sm: 28 } }} />
             <Typography
               variant="h6"
               component="span"
               sx={{
                 fontWeight: 'bold',
-                display: { xs: 'none', sm: 'block' }
+                display: { xs: 'none', sm: 'block' },
+                fontSize: { sm: '1.25rem' }
               }}
             >
               StockAlert
@@ -87,7 +88,7 @@ const Navbar = () => {
           </Box>
 
           {/* Navigation Links */}
-          <Box sx={{ flexGrow: 1, display: 'flex', gap: 1 }}>
+          <Box sx={{ flexGrow: 1, display: 'flex', gap: { xs: 0.5, sm: 1 } }}>
             {isAuthenticated && (
               <>
                 <Button
@@ -96,10 +97,12 @@ const Navbar = () => {
                   to="/dashboard"
                   startIcon={<DashboardIcon />}
                   sx={{
-                    bgcolor: isActive('/dashboard') ? 'rgba(255,255,255,0.1)' : 'transparent'
+                    bgcolor: isActive('/dashboard') ? 'rgba(255,255,255,0.1)' : 'transparent',
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    px: { xs: 0.5, sm: 1 }
                   }}
                 >
-                  Dashboard
+                  <span sx={{ display: { xs: 'none', sm: 'inline' } }}>Dashboard</span>
                 </Button>
                 <Button
                   color="inherit"
@@ -107,10 +110,12 @@ const Navbar = () => {
                   to="/alerts"
                   startIcon={<NotificationsIcon />}
                   sx={{
-                    bgcolor: isActive('/alerts') ? 'rgba(255,255,255,0.1)' : 'transparent'
+                    bgcolor: isActive('/alerts') ? 'rgba(255,255,255,0.1)' : 'transparent',
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    px: { xs: 0.5, sm: 1 }
                   }}
                 >
-                  Alerts
+                  <span sx={{ display: { xs: 'none', sm: 'inline' } }}>Alerts</span>
                 </Button>
               </>
             )}
@@ -128,15 +133,16 @@ const Navbar = () => {
                   aria-haspopup="true"
                   onClick={handleMenuOpen}
                   color="inherit"
+                  sx={{ p: { xs: 0.5, sm: 1 } }}
                 >
                   {user?.profilePicture ? (
                     <Avatar
                       src={user.profilePicture}
                       alt={user.fullName}
-                      sx={{ width: 32, height: 32 }}
+                      sx={{ width: { xs: 28, sm: 32 }, height: { xs: 28, sm: 32 } }}
                     />
                   ) : (
-                    <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
+                    <Avatar sx={{ width: { xs: 28, sm: 32 }, height: { xs: 28, sm: 32 }, bgcolor: 'secondary.main' }}>
                       {user?.firstName?.[0]?.toUpperCase() || 'U'}
                     </Avatar>
                   )}
@@ -151,7 +157,7 @@ const Navbar = () => {
                     elevation: 3,
                     sx: {
                       mt: 1.5,
-                      minWidth: 200,
+                      minWidth: { xs: 160, sm: 200 },
                       '& .MuiAvatar-root': {
                         width: 24,
                         height: 24,
@@ -177,13 +183,15 @@ const Navbar = () => {
                 </Menu>
               </>
             ) : (
-              <Box sx={{ display: 'flex', gap: 1 }}>
+              <Box sx={{ display: 'flex', gap: { xs: 0.5, sm: 1 } }}>
                 <Button
                   color="inherit"
                   component={Link}
                   to="/login"
                   sx={{
-                    bgcolor: isActive('/login') ? 'rgba(255,255,255,0.1)' : 'transparent'
+                    bgcolor: isActive('/login') ? 'rgba(255,255,255,0.1)' : 'transparent',
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    px: { xs: 0.5, sm: 1 }
                   }}
                 >
                   Login
@@ -195,6 +203,8 @@ const Navbar = () => {
                   to="/register"
                   sx={{
                     borderColor: 'rgba(255,255,255,0.5)',
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    px: { xs: 0.5, sm: 1 },
                     '&:hover': {
                       borderColor: 'white',
                       bgcolor: 'rgba(255,255,255,0.1)'
