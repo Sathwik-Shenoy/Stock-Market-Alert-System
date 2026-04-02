@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Typography,
@@ -65,12 +65,8 @@ const Alerts = () => {
   });
 
   // Load alerts on component mount and when page changes
-  useEffect(() => {
-    loadAlerts();
-  }, [pagination.page]);
-
   // Load alerts from API
-  const loadAlerts = async () => {
+  const loadAlerts = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -80,12 +76,15 @@ const Alerts = () => {
         limit: pagination.limit
       });
       
-      setAlerts(response.data.docs || []);
+      const docs = response.docs || response.data || [];
+      const paginationData = response.pagination || {};
+
+      setAlerts(docs);
       setPagination({
-        page: response.data.page || 1,
-        totalPages: response.data.totalPages || 1,
-        totalAlerts: response.data.totalDocs || 0,
-        limit: response.data.limit || 10
+        page: paginationData.page || 1,
+        totalPages: paginationData.pages || 1,
+        totalAlerts: paginationData.total || 0,
+        limit: pagination.limit
       });
     } catch (err) {
       setError(err.message);
@@ -93,7 +92,11 @@ const Alerts = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.limit, pagination.page]);
+
+  useEffect(() => {
+    loadAlerts();
+  }, [loadAlerts, pagination.page]);
 
   // Handle creating or updating an alert
   const handleSaveAlert = async () => {
@@ -113,7 +116,7 @@ const Alerts = () => {
         targetValue: parseFloat(newAlert.targetValue),
         description: newAlert.description,
         emailNotification: newAlert.emailNotification,
-        expiresAt: newAlert.expiresAt || null
+        ...(newAlert.expiresAt ? { expiresAt: newAlert.expiresAt } : {})
       };
 
       if (editingAlert) {
@@ -160,10 +163,16 @@ const Alerts = () => {
   };
 
   // Handle testing an alert
-  const handleTestAlert = async (alertId) => {
+  const handleTestAlert = async (alert) => {
     try {
-      const response = await AlertService.testAlert(alertId);
-      toast.success(`Alert test: ${response.message}`);
+      const response = await AlertService.testAlert(alert._id, {
+        symbol: alert.symbol,
+        alertType: alert.alertType,
+        condition: alert.condition,
+        targetValue: alert.targetValue,
+        indicatorType: alert.indicatorType
+      });
+      toast.success(`Alert test: ${response.message || 'completed successfully'}`);
     } catch (err) {
       toast.error(`Failed to test alert: ${err.message}`);
     }
@@ -256,12 +265,19 @@ const Alerts = () => {
     <div className="dashboard-container fade-in">
       <Container maxWidth="lg">
         {/* Header */}
-        <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
-          <Box>
-            <Typography variant="h4" component="h1" gutterBottom>
+        <Box
+          display="flex"
+          flexDirection={{ xs: 'column', sm: 'row' }}
+          justifyContent="space-between"
+          alignItems={{ xs: 'flex-start', sm: 'center' }}
+          mb={4}
+          gap={2}
+        >
+          <Box flex={1}>
+            <Typography variant="h4" component="h1" gutterBottom sx={{ fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
               Alert Management
             </Typography>
-            <Typography variant="body1" color="text.secondary">
+            <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
               Create and manage your stock alerts. Get notified when your conditions are met.
             </Typography>
           </Box>
@@ -270,6 +286,7 @@ const Alerts = () => {
             startIcon={<Add />}
             onClick={handleCreateAlert}
             size="large"
+            sx={{ whiteSpace: 'nowrap', width: { xs: '100%', sm: 'auto' } }}
           >
             Create Alert
           </Button>
@@ -316,7 +333,7 @@ const Alerts = () => {
             ) : (
               <Grid container spacing={3}>
                 {alerts.map((alert) => (
-                  <Grid item xs={12} md={6} lg={4} key={alert._id}>
+                  <Grid size={{ xs: 12, md: 6, lg: 4 }} key={alert._id}>
                     <Card className={`alert-item ${alert.status === 'active' ? 'active' : 'inactive'} slide-up`}>
                       <CardContent>
                         <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
@@ -349,7 +366,7 @@ const Alerts = () => {
                           <Typography variant="body2" gutterBottom>
                             <strong>Condition:</strong> {alert.condition} ${alert.targetValue}
                           </Typography>
-                          <Typography variant="body2" gutterBottom>
+                          <Typography variant="body2" gutterBottom component="div">
                             <strong>Status:</strong> 
                             <Chip 
                               label={alert.status} 
@@ -367,12 +384,14 @@ const Alerts = () => {
                         </Box>
                       </CardContent>
 
-                      <CardActions>
+                      <CardActions sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1 }}>
                         <Button
                           size="small"
                           startIcon={alert.status === 'active' ? <Pause /> : <PlayArrow />}
                           onClick={() => handleToggleAlert(alert._id)}
                           color={alert.status === 'active' ? 'warning' : 'success'}
+                          fullWidth
+                          sx={{ justifyContent: 'flex-start' }}
                         >
                           {alert.status === 'active' ? 'Pause' : 'Activate'}
                         </Button>
@@ -380,14 +399,18 @@ const Alerts = () => {
                           size="small"
                           startIcon={<Edit />}
                           onClick={() => handleEditAlert(alert)}
+                          fullWidth
+                          sx={{ justifyContent: 'flex-start' }}
                         >
                           Edit
                         </Button>
                         <Button
                           size="small"
                           startIcon={<ShowChart />}
-                          onClick={() => handleTestAlert(alert._id)}
+                          onClick={() => handleTestAlert(alert)}
                           color="info"
+                          fullWidth
+                          sx={{ justifyContent: 'flex-start' }}
                         >
                           Test
                         </Button>
@@ -396,6 +419,8 @@ const Alerts = () => {
                           startIcon={<Delete />}
                           onClick={() => handleDeleteAlert(alert._id)}
                           color="error"
+                          fullWidth
+                          sx={{ justifyContent: 'flex-start' }}
                         >
                           Delete
                         </Button>
@@ -438,7 +463,7 @@ const Alerts = () => {
         <Dialog 
           open={openDialog} 
           onClose={handleCloseDialog} 
-          maxWidth="md" 
+          maxWidth="sm" 
           fullWidth
           aria-labelledby="alert-dialog-title"
           aria-describedby="alert-dialog-description"
@@ -447,13 +472,14 @@ const Alerts = () => {
           disableEnforceFocus={false}
           disableAutoFocus={false}
           disableRestoreFocus={false}
+          sx={{ '& .MuiDialog-paper': { m: 1 } }}
         >
           <DialogTitle id="alert-dialog-title">
             {editingAlert ? 'Edit Alert' : 'Create New Alert'}
           </DialogTitle>
           <DialogContent id="alert-dialog-description">
             <Grid container spacing={2} sx={{ mt: 1 }}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   label="Stock Symbol"
                   value={newAlert.symbol}
@@ -463,7 +489,7 @@ const Alerts = () => {
                   placeholder="e.g., AAPL"
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12 }}>
                 <FormControl fullWidth required>
                   <InputLabel>Alert Type</InputLabel>
                   <Select
@@ -478,7 +504,7 @@ const Alerts = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12 }}>
                 <FormControl fullWidth required>
                   <InputLabel>Condition</InputLabel>
                   <Select
@@ -494,7 +520,7 @@ const Alerts = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   label="Target Value"
                   type="number"
@@ -505,7 +531,7 @@ const Alerts = () => {
                   placeholder="e.g., 150.00"
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <TextField
                   label="Description"
                   value={newAlert.description}
@@ -516,7 +542,7 @@ const Alerts = () => {
                   placeholder="Optional description for this alert"
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12 }}>
                 <TextField
                   label="Expires At"
                   type="date"
@@ -526,7 +552,7 @@ const Alerts = () => {
                   InputLabelProps={{ shrink: true }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12 }}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -539,10 +565,11 @@ const Alerts = () => {
               </Grid>
             </Grid>
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ flexDirection: { xs: 'column-reverse', sm: 'row' }, gap: 1 }}>
             <Button 
               onClick={handleCloseDialog}
               color="inherit"
+              fullWidth
             >
               Cancel
             </Button>
@@ -551,6 +578,7 @@ const Alerts = () => {
               variant="contained"
               disabled={submitting}
               autoFocus
+              fullWidth
             >
               {submitting ? 'Saving...' : (editingAlert ? 'Update Alert' : 'Create Alert')}
             </Button>

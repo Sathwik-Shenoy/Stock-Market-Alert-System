@@ -11,7 +11,6 @@ import {
   InputAdornment,
   IconButton,
   Grid,
-  Divider,
   Fade,
   Slide
 } from '@mui/material';
@@ -22,7 +21,6 @@ import {
   Lock, 
   Person,
   PersonOutline,
-  ShowChart,
   AccountCircle
 } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
@@ -188,7 +186,7 @@ const Register = () => {
 
           <Box component="form" onSubmit={handleSubmit} className="auth-form">
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="First Name"
@@ -207,7 +205,7 @@ const Register = () => {
                   }}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <TextField
                   fullWidth
                   label="Last Name"
