@@ -45,7 +45,7 @@ router.get('/:id', alertController.getAlert);
  * @desc    Update an alert
  * @access  Private
  */
-router.put('/:id', alertController.updateAlert);
+router.put('/:id', validateAlertUpdate, alertController.updateAlert);
 
 /**
  * @route   PATCH /api/alerts/:id/toggle

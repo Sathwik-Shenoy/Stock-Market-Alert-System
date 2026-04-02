@@ -2,6 +2,7 @@ const Alert = require('../models/Alert');
 const User = require('../models/User');
 const StockService = require('../services/stockService');
 const { TechnicalIndicators } = require('./stockController');
+const mongoose = require('mongoose');
 
 /**
  * Alert Controller - Handles alert creation, management, and monitoring
@@ -103,7 +104,12 @@ const getUserAlerts = async (req, res) => {
         total: alerts.totalDocs,
         hasNext: alerts.hasNextPage,
         hasPrev: alerts.hasPrevPage
-      }
+      },
+      // Backward-compatible shape for existing client code.
+      totalDocs: alerts.totalDocs,
+      totalPages: alerts.totalPages,
+      docs: alerts.docs,
+      limit: alerts.limit
     });
 
   } catch (error) {
@@ -119,6 +125,10 @@ const updateAlert = async (req, res) => {
   try {
     const { id } = req.params;
     const updates = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid alert id format' });
+    }
 
     // Remove fields that shouldn't be updated
     delete updates.userId;
@@ -154,6 +164,10 @@ const deleteAlert = async (req, res) => {
   try {
     const { id } = req.params;
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid alert id format' });
+    }
+
     const alert = await Alert.findOneAndDelete({
       _id: id,
       userId: req.user._id
@@ -181,18 +195,22 @@ const toggleAlert = async (req, res) => {
   try {
     const { id } = req.params;
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid alert id format' });
+    }
+
     const alert = await Alert.findOne({ _id: id, userId: req.user._id });
 
     if (!alert) {
       return res.status(404).json({ error: 'Alert not found' });
     }
 
-    alert.status = alert.status === 'active' ? 'paused' : 'active';
+    alert.isActive = !alert.isActive;
     await alert.save();
 
     res.json({
       success: true,
-      message: `Alert ${alert.status === 'active' ? 'activated' : 'paused'}`,
+      message: `Alert ${alert.isActive ? 'activated' : 'deactivated'}`,
       data: alert.toJSON()
     });
 
@@ -271,9 +289,29 @@ const getAlertStats = async (req, res) => {
  */
 const testAlert = async (req, res) => {
   try {
-    const { symbol, alertType, condition, targetValue, indicatorType } = req.body;
+    const { id } = req.params;
 
-    if (!symbol || !alertType || !condition || !targetValue) {
+    let { symbol, alertType, condition, targetValue, indicatorType } = req.body;
+
+    // If the client only provides alert id, fetch the persisted alert config.
+    if ((!symbol || !alertType || !condition || targetValue == null) && id) {
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ error: 'Invalid alert id format' });
+      }
+
+      const savedAlert = await Alert.findOne({ _id: id, userId: req.user._id });
+      if (!savedAlert) {
+        return res.status(404).json({ error: 'Alert not found' });
+      }
+
+      symbol = savedAlert.symbol;
+      alertType = savedAlert.alertType;
+      condition = savedAlert.condition;
+      targetValue = savedAlert.targetValue;
+      indicatorType = savedAlert.indicatorType;
+    }
+
+    if (!symbol || !alertType || !condition || targetValue == null) {
       return res.status(400).json({
         error: 'Symbol, alert type, condition, and target value are required'
       });
@@ -337,6 +375,13 @@ const getAlert = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user._id;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid alert id format'
+      });
+    }
 
     const alert = await Alert.findOne({ _id: id, userId }).populate('userId', 'firstName lastName email');
 

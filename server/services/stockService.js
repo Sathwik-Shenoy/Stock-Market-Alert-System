@@ -10,6 +10,38 @@ const ALPHA_VANTAGE_BASE_URL = 'https://www.alphavantage.co/query';
  * Backend Stock Service for Alert Monitoring
  */
 class StockService {
+  static normalizeQuoteFromModel(modelQuote) {
+    const currentPrice =
+      typeof modelQuote.price === 'number'
+        ? modelQuote.price
+        : modelQuote.price?.current;
+
+    const change =
+      typeof modelQuote.change === 'number'
+        ? modelQuote.change
+        : modelQuote.price?.change;
+
+    const changePercent =
+      typeof modelQuote.changePercent === 'number'
+        ? modelQuote.changePercent
+        : modelQuote.price?.changePercent;
+
+    const volume =
+      typeof modelQuote.volume === 'number'
+        ? modelQuote.volume
+        : modelQuote.volume?.current;
+
+    return {
+      symbol: modelQuote.symbol,
+      price: currentPrice,
+      change,
+      changePercent,
+      volume,
+      timestamp: modelQuote.timestamp,
+      source: modelQuote.source
+    };
+  }
+
   /**
    * Get stock quote for alert monitoring
    * @param {string} symbol - Stock symbol
@@ -25,12 +57,7 @@ class StockService {
 
       if (cachedData) {
         return {
-          symbol: cachedData.symbol,
-          price: cachedData.price,
-          change: cachedData.change,
-          changePercent: cachedData.changePercent,
-          volume: cachedData.volume,
-          timestamp: cachedData.timestamp,
+          ...this.normalizeQuoteFromModel(cachedData),
           source: 'cache'
         };
       }
@@ -53,19 +80,30 @@ class StockService {
 
         const stockData = {
           symbol: symbol.toUpperCase(),
-          price: parseFloat(quote.c), // current price
-          change: parseFloat(quote.d), // change
-          changePercent: parseFloat(quote.dp), // change percent
-          volume: 0, // Finnhub doesn't provide volume in quote endpoint
+          companyName: symbol.toUpperCase(),
+          price: {
+            current: parseFloat(quote.c),
+            open: parseFloat(quote.o || quote.c),
+            high: parseFloat(quote.h || quote.c),
+            low: parseFloat(quote.l || quote.c),
+            previousClose: parseFloat(quote.pc || quote.c),
+            change: parseFloat(quote.d || 0),
+            changePercent: parseFloat(quote.dp || 0)
+          },
+          volume: {
+            current: 0,
+            average: 0
+          },
           timestamp: new Date(quote.t * 1000), // convert unix timestamp
-          source: 'finnhub'
+          source: 'finnhub',
+          timeframe: '15min'
         };
 
         // Save to cache
-        await StockData.create(stockData);
+        const saved = await StockData.create(stockData);
 
         return {
-          ...stockData,
+          ...this.normalizeQuoteFromModel(saved),
           source: 'finnhub'
         };
 
@@ -90,19 +128,30 @@ class StockService {
 
         const stockData = {
           symbol: quote['01. symbol'],
-          price: parseFloat(quote['05. price']),
-          change: parseFloat(quote['09. change']),
-          changePercent: parseFloat(quote['10. change percent'].replace('%', '')),
-          volume: parseInt(quote['06. volume']),
+          companyName: quote['01. symbol'],
+          price: {
+            current: parseFloat(quote['05. price']),
+            open: parseFloat(quote['02. open'] || quote['05. price']),
+            high: parseFloat(quote['03. high'] || quote['05. price']),
+            low: parseFloat(quote['04. low'] || quote['05. price']),
+            previousClose: parseFloat(quote['08. previous close'] || quote['05. price']),
+            change: parseFloat(quote['09. change'] || 0),
+            changePercent: parseFloat((quote['10. change percent'] || '0%').replace('%', ''))
+          },
+          volume: {
+            current: parseInt(quote['06. volume'] || '0', 10),
+            average: 0
+          },
           timestamp: new Date(),
-          source: 'alpha_vantage'
+          source: 'alpha_vantage',
+          timeframe: '15min'
         };
 
         // Save to cache
-        await StockData.create(stockData);
+        const saved = await StockData.create(stockData);
 
         return {
-          ...stockData,
+          ...this.normalizeQuoteFromModel(saved),
           source: 'alpha_vantage_fallback'
         };
       }

@@ -142,7 +142,7 @@ const validateAlert = [
     .withMessage('Email notification must be a boolean'),
     
   body('expiresAt')
-    .optional()
+    .optional({ checkFalsy: true })
     .isISO8601()
     .withMessage('Expiration date must be in valid ISO 8601 format'),
     
@@ -196,7 +196,7 @@ const validateAlertUpdate = [
     .withMessage('Email notification must be a boolean'),
     
   body('expiresAt')
-    .optional()
+    .optional({ checkFalsy: true })
     .isISO8601()
     .withMessage('Expiration date must be in valid ISO 8601 format'),
 
