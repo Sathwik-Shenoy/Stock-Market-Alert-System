@@ -19,6 +19,7 @@ const errorHandler = require('./middleware/errorHandler');
 // const alertMonitor = require('./utils/alertMonitor');
 
 const app = express();
+let server;
 
 // Security middleware
 app.use(helmet());
@@ -70,18 +71,6 @@ app.options('*', cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/stock-alert-db')
-.then(() => {
-  console.log('✅ Connected to MongoDB');
-  // Start background alert monitoring after DB connection
-  // alertMonitor.startMonitoring();
-})
-.catch((error) => {
-  console.error('❌ MongoDB connection error:', error);
-  process.exit(1);
-});
-
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
@@ -112,11 +101,35 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📊 Stock Alert System API is ready!`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+async function startServer() {
+  if (!process.env.MONGODB_URI) {
+    console.error('❌ Missing required environment variable: MONGODB_URI');
+    process.exit(1);
+  }
+
+  if (!process.env.JWT_SECRET) {
+    console.error('❌ Missing required environment variable: JWT_SECRET');
+    process.exit(1);
+  }
+
+  try {
+    await mongoose.connect(process.env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 10000
+    });
+    console.log('✅ Connected to MongoDB');
+
+    server = app.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log('📊 Stock Alert System API is ready!');
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  } catch (error) {
+    console.error('❌ MongoDB connection error:', error.message);
+    process.exit(1);
+  }
+}
+
+startServer();
 
 // Admin endpoint for alert monitor control
 app.get('/api/admin/alert-monitor/status', (req, res) => {
@@ -162,6 +175,11 @@ app.post('/api/admin/alert-monitor/check', async (req, res) => {
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully');
   // alertMonitor.stopMonitoring();
+  if (!server) {
+    mongoose.connection.close();
+    process.exit(0);
+  }
+
   server.close(() => {
     console.log('Process terminated');
     mongoose.connection.close();
@@ -171,6 +189,11 @@ process.on('SIGTERM', () => {
 process.on('SIGINT', () => {
   console.log('SIGINT received, shutting down gracefully');
   // alertMonitor.stopMonitoring();
+  if (!server) {
+    mongoose.connection.close();
+    process.exit(0);
+  }
+
   server.close(() => {
     console.log('Process terminated');
     mongoose.connection.close();
