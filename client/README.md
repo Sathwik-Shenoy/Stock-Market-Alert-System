@@ -42,7 +42,7 @@ Open [http://localhost:3000](http://localhost:3000), login, and open `/dashboard
 If your backend runs on a different host, set:
 
 ```bash
-REACT_APP_API_URL=https://your-api-domain/api
+REACT_APP_API_URL=https://stock-market-alert-system.onrender.com/api
 ```
 
 ## Build
