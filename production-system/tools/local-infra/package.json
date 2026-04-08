@@ -1,0 +1,11 @@
+{
+  "name": "stock-local-infra",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "dependencies": {
+    "mongodb-memory-server": "^10.2.0",
+    "redis-memory-server": "^0.16.0"
+  }
+}
+
