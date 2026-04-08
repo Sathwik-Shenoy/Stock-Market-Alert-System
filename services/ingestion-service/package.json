@@ -1,0 +1,17 @@
+{
+  "name": "ingestion-service",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "bottleneck": "^2.19.5",
+    "redis": "^4.6.7",
+    "p-retry": "^4.6.2",
+    "debug": "^4.3.4",
+    "stock-shared": "file:../shared"
+  }
+}
