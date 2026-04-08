@@ -1,0 +1,12 @@
+{
+  "name": "stock-shared",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.js",
+  "dependencies": {
+    "redis": "^4.6.7",
+    "prom-client": "^14.0.1",
+    "p-retry": "^4.6.2",
+    "debug": "^4.3.4"
+  }
+}
