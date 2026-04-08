@@ -1,0 +1,22 @@
+{
+  "name": "stock-production-system",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "axios": "^1.10.0",
+    "dotenv": "^16.6.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.5.1",
+    "ioredis": "^5.4.1",
+    "mongoose": "^8.3.4",
+    "prom-client": "^15.1.3",
+    "ws": "^8.18.3"
+  },
+  "scripts": {
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down -v",
+    "start:ingestion": "PORT=4010 node ingestion-service/src/index.js",
+    "start:alerts": "PORT=4020 node alert-engine/src/index.js",
+    "start:api": "PORT=4030 node api-server/src/index.js"
+  }
+}
